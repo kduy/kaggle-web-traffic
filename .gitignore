@@ -2,7 +2,7 @@
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
+data_kaggle/*
 data/cpt
 data/logs
 data/vars

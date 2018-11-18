@@ -230,7 +230,7 @@ def calc_loss(predictions, true_y, additional_mask=None):
     return mae_loss, smape_loss(true_y, predictions, weights), calc_smape_rounded(true_y, predictions,
                                                                                   weights), tf.size(true_y)
 
-
+# todo: train
 def make_train_op(loss, ema_decay=None, prefix=None):
     optimizer = tf.train.AdamOptimizer()
     glob_step = tf.train.get_global_step()

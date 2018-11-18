@@ -173,6 +173,12 @@ class InputPipe:
         keep = zeros_x <= self.max_train_empty
         return keep
 
+#todo: making feature....................
+
+#todo: self.true_x, self.time_x, self.norm_x, self.lagged_x, self.true_y, self.time_y, self.norm_y, self.norm_mean, \
+#todo        self.norm_std, self.page_features, self.page_ix = it_tensors
+
+
     def make_features(self, x_hits, y_hits, dow, lagged_hits, pf_agent, pf_country, pf_site, page_ix,
                       page_popularity, year_autocorr, quarter_autocorr):
         """
@@ -280,6 +286,8 @@ class InputPipe:
         cutter = {ModelMode.TRAIN: self.cut_train, ModelMode.EVAL: self.cut_eval, ModelMode.PREDICT: self.cut_eval}
         # Create dataset, transform features and assemble batches
         root_ds = tf.data.Dataset.from_tensor_slices(tuple(features)).repeat(n_epoch)
+
+        #todo:  making the batch
         batch = (root_ds
                  .map(cutter[mode])
                  .filter(self.reject_filter)
@@ -292,6 +300,11 @@ class InputPipe:
         it_tensors = self.iterator.get_next()
 
         # Assign all tensors to class variables
+        # todo: ==================================
+        # Todo: noted:     data -> tensorflow feature
+        # todo: x_hits, y_hits, dow, lagged_hits, pf_agent, pf_country, pf_site, page_ix,
+        # todo                      page_popularity, year_autocorr, quarter_autocorr
+        # todo: ==================================
         self.true_x, self.time_x, self.norm_x, self.lagged_x, self.true_y, self.time_y, self.norm_y, self.norm_mean, \
         self.norm_std, self.page_features, self.page_ix = it_tensors
 
@@ -303,7 +316,7 @@ class InputPipe:
     def init_iterator(self, session):
         session.run(self.iterator.initializer)
 
-
+#Todo: noted
 def page_features(inp: VarFeeder):
     return (inp.hits, inp.pf_agent, inp.pf_country, inp.pf_site,
             inp.page_ix, inp.page_popularity, inp.year_autocorr, inp.quarter_autocorr)

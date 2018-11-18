@@ -14,7 +14,7 @@ Main files:
 
 How to reproduce competition results:
 1. Download input files from https://www.kaggle.com/c/web-traffic-time-series-forecasting/data :
-`key_2.csv.zip`, `train_2.csv.zip`, put them into `data` directory.
+`key_2.csv.zip`, `tran_2.csv.zip`, put them into `data` directory.
 2. Run `python make_features.py data/vars --add_days=63`. It will
 extract data and features from the input files and put them into
 `data/vars` as Tensorflow checkpoint.
