@@ -9,50 +9,48 @@ from feeder import VarFeeder
 import numba
 from typing import Tuple, Dict, Collection, List
 
-
-def read_cached(name) -> pd.DataFrame:
+root = '/mnt/md0/hackathon/'
+def read_cached(name="MY-153251") -> pd.DataFrame:
     """
     Reads csv file (maybe zipped) from data directory and caches it's content as a pickled DataFrame
     :param name: file name without extension
     :return: file content
     """
-    cached = 'data/%s.pkl' % name
-    sources = ['data/%s.csv' % name, 'data/%s.csv.zip' % name]
+
+    cached = root + '%s.pkl' % name
+
     if os.path.exists(cached):
         return pd.read_pickle(cached)
-    else:
-        for src in sources:
-            if os.path.exists(src):
-                df = pd.read_csv(src)
-                df.to_pickle(cached)
-                return df
-
 
 def read_all() -> pd.DataFrame:
     """
     Reads source data for training/prediction
     """
-    def read_file(file):
-        df = read_cached(file).set_index('Page')
+    def read_file(file=None):
+        # df = read_cached(file).set_index('Page')
+        df = read_cached()
         df.columns = df.columns.astype('M8[D]')
         return df
 
-    # Path to cached data
-    path = os.path.join('data', 'all.pkl')
-    if os.path.exists(path):
-        df = pd.read_pickle(path)
-    else:
-        # Official data
-        df = read_file('train_2')
-        # Scraped data
-        scraped = read_file('2017-08-15_2017-09-11')
-        # Update last two days by scraped data
-        df[pd.Timestamp('2017-09-10')] = scraped['2017-09-10']
-        df[pd.Timestamp('2017-09-11')] = scraped['2017-09-11']
-
-        df = df.sort_index()
-        # Cache result
-        df.to_pickle(path)
+    # # Path to cached data
+    # path = os.path.join('data', 'all.pkl')
+    # if os.path.exists(path):
+    #     df = pd.read_pickle(path)
+    # else:
+    #     # Official data
+    #     df = read_file('train_2')
+    #     # Scraped data
+    #     scraped = read_file('2017-08-15_2017-09-11')
+    #     # Update last two days by scraped data
+    #     df[pd.Timestamp('2017-09-10')] = scraped['2017-09-10']
+    #     df[pd.Timestamp('2017-09-11')] = scraped['2017-09-11']
+    #
+    #     df = df.sort_index()
+    #     # Cache result
+    #     df.to_pickle(path)
+    #Cache result
+    df = read_file()
+    df.to_pickle("save_df.pkl")
     return df
 
 # todo:remove
@@ -211,7 +209,7 @@ def make_page_features(pages: np.ndarray) -> pd.DataFrame:
     """
     tagged = extractor.extract(pages).set_index('page')
     # Drop useless features
-    features: pd.DataFrame = tagged.drop(['term', 'marker'], axis=1)
+    features: pd.DataFrame = tagged
     return features
 
 
@@ -259,6 +257,12 @@ def normalize(values: np.ndarray):
     return (values - values.mean()) / np.std(values)
 
 
+# df = read_all()
+#
+# print(df)
+
+
+
 def run():
     parser = argparse.ArgumentParser(description='Prepare data')
     parser.add_argument('data_dir')
@@ -272,23 +276,25 @@ def run():
     # Get the data
     df, nans, starts, ends = prepare_data(args.start, args.end, args.valid_threshold)
 
+
     # Our working date range
     data_start, data_end = df.columns[0], df.columns[-1]
 
     # We have to project some date-dependent features (day of week, etc) to the future dates for prediction
-    features_end = data_end + pd.Timedelta(args.add_days, unit='D')
+    features_end = data_end + pd.Timedelta(args.add_days, unit='h')
     print(f"start: {data_start}, end:{data_end}, features_end:{features_end}")
 
+    # todo: disable
     # Group unique pages by agents
-    assert df.index.is_monotonic_increasing
-    page_map = uniq_page_map(df.index.values)
+    # assert df.index.is_monotonic_increasing
+    # page_map = uniq_page_map(df.index.values)
 
     # Yearly(annual) autocorrelation
-    raw_year_autocorr = batch_autocorr(df.values, 365, starts, ends, 1.5, args.corr_backoffset)
+    raw_year_autocorr = batch_autocorr(df.values, 365*24, starts, ends, 1.5, args.corr_backoffset)
     year_unknown_pct = np.sum(np.isnan(raw_year_autocorr))/len(raw_year_autocorr)  # type: float
 
     # Quarterly autocorrelation
-    raw_quarter_autocorr = batch_autocorr(df.values, int(round(365.25/4)), starts, ends, 2, args.corr_backoffset)
+    raw_quarter_autocorr = batch_autocorr(df.values, int(round(365.25*24/4)), starts, ends, 2, args.corr_backoffset)
     quarter_unknown_pct = np.sum(np.isnan(raw_quarter_autocorr)) / len(raw_quarter_autocorr)  # type: float
 
     print("Percent of undefined autocorr = yearly:%.3f, quarterly:%.3f" % (year_unknown_pct, quarter_unknown_pct))
@@ -316,12 +322,12 @@ def run():
 
     # Put NaNs back
     df[nans] = np.NaN
-
+'''
     # Assemble final output
     tensors = dict(
         hits=df,
         lagged_ix=lagged_ix,
-        page_map=page_map,
+        # page_map=page_map,
         page_ix=df.index.values,
         pf_agent=encoded_page_features['agent'],
         pf_country=encoded_page_features['country'],
@@ -344,6 +350,7 @@ def run():
     # Store data to the disk
     VarFeeder(args.data_dir, tensors, plain)
 
-
+'''
 if __name__ == '__main__':
     run()
+
