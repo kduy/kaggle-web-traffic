@@ -10,7 +10,7 @@ import numba
 from typing import Tuple, Dict, Collection, List
 
 root = '/mnt/md0/hackathon/'
-def read_cached(name="MY-153251") -> pd.DataFrame:
+def read_cached(name="linde_sample_5") -> pd.DataFrame:
     """
     Reads csv file (maybe zipped) from data directory and caches it's content as a pickled DataFrame
     :param name: file name without extension
@@ -322,16 +322,16 @@ def run():
 
     # Put NaNs back
     df[nans] = np.NaN
-'''
+
     # Assemble final output
     tensors = dict(
         hits=df,
         lagged_ix=lagged_ix,
         # page_map=page_map,
         page_ix=df.index.values,
-        pf_agent=encoded_page_features['agent'],
+        # pf_agent=encoded_page_features['agent'],
         pf_country=encoded_page_features['country'],
-        pf_site=encoded_page_features['site'],
+        # pf_site=encoded_page_features['site'],
         page_popularity=page_popularity,
         year_autocorr=year_autocorr,
         quarter_autocorr=quarter_autocorr,
@@ -350,7 +350,7 @@ def run():
     # Store data to the disk
     VarFeeder(args.data_dir, tensors, plain)
 
-'''
+
 if __name__ == '__main__':
     run()
 
